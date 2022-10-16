@@ -69,7 +69,7 @@ def sendHapticSignals(emotion, direction, text=None):
         for b in bytearray(text, 'ascii'):
             payload.append(b)
     payload.append(0x10)
-    _port.write(payload)
+    _port.write(bytearray(payload))
     
 
 def whisper():
