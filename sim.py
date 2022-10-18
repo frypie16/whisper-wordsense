@@ -22,6 +22,7 @@ _SRATE = 44100
 _THRESHOLD = 0.2
 _RECORD_THRESHOLD = 50000
 _PORT='COM1'
+_ARD_PORT = 'COM2'
 _BAUDRATE=9600
 _FILENAME = 'record.wav'
 
@@ -91,19 +92,26 @@ print('listening. press e to end program')
 
 def arduinoThreadFunc():
     print("starting arduino...")
-    arduino = Controller('COM2')
-    while True:
+    arduino = Controller(_ARD_PORT)
+    while _isRunning:
         arduino.loop()
+        
+def serRead(port):
+    return int.from_bytes(port.read(), 'big')
+
+def serWrite(port, x):
+    port.write(x.to_bytes(1,'big'))
 
 arduino_thread = threading.Thread(target=arduinoThreadFunc, daemon=True)
 arduino_thread.start()
-_port.write(0x32)
+serWrite(_port, 0x32)
 
 while _isRunning:
     if _isConnected is False:
-        _port.write(0x32)
+        serWrite(_port, 0x32)
         if _port.in_waiting > 0:
-            if _port.read() == 0x32:
+            if serRead(_port) == 0x32:
+                sendHapticSignals(-1, 2)
                 _isConnected = True
     if _isRecording is False:
         if len(_bufferdata) > _RECORD_THRESHOLD:

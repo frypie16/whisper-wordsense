@@ -28,23 +28,30 @@ class Controller:
         while self.isConnected is False:
             if self.port.in_waiting == 0:
                 continue
-            print(self.port.read())
-            if self.port.read() != self.CONN_FLAG:
+            if self.serRead() != self.CONN_FLAG:
                 continue
-            self.port.write(self.CONN_FLAG)
-            while self.port.in_waiting > 0:
-                dummy = self.port.read()
+            self.serWrite(self.CONN_FLAG)
             self.isConnected = True
             self.pwr = 1
             print("controller connected. activated pin 8")
+            
+    def serRead(self):
+        return int.from_bytes(self.port.read(), 'big')
+    
+    def serWrite(self, x):
+        self.port.write(x.to_bytes(1, 'big'))
     
     def loop(self):
-        if self.port.in_waiting > 0:
-            if self.read() != self.FRAME_START:
+        if self.port.in_waiting > 2:
+            if self.serRead() != self.FRAME_START:
                 return
-            emotion = self.read()
-            direction = self.read()
+            emotion = self.serRead()
+            direction = self.serRead()
             print("activated motor pin {dPin}".format(dPin=self.motorPins[self.direction_codes[direction]]))
             print("activated emotion: {etype}".format(etype=self.emotion_codes[emotion]))
+            
+    def __del__(self):
+        self.port.close()
+        print("arduino powered down")
     
             
